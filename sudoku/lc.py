@@ -79,16 +79,21 @@ class Solution:
                     self.val[ind].remove(n)
                     if len(self.val[ind])==0:
                         print("returning False")
+                        print_board(self.board)
                         return False
         return True
 
     def undo(self, kee, update):
-        self.board[kee[0]][kee[1]]="xx"
+        pprint.pprint(self.val)
+        print(f"undoing: key: {kee} update: {update}")
+        #self.board[kee[0]][kee[1]]="xx"
         for k in update:            
             if k not in self.val:
                 self.val[k]= update[k]
             else:
                 self.val[k].append(update[k])
+        # print_board(self.board)
+        pprint.pprint(self.val)
         return None
 
 def print_board(board):
