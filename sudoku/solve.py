@@ -116,8 +116,8 @@ def load_boards(boards_fn):
 
 import time
 
-boards = load_boards("sudoku.txt")
 start = time.time()
+boards = load_boards("sudoku.txt")
 for i, board in enumerate(boards):
     x = board.tolist()
     print_board(x)
@@ -125,9 +125,9 @@ for i, board in enumerate(boards):
     print(i)
     print_board(x)
 
+
 end = time.time()
 print(end - start)
-
 
 # print(9 in x)
 # print(3 in x)
