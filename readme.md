@@ -75,7 +75,7 @@ When we select a candidate for a cell, we can update the list of valid candidate
 
 ### **Pseudocode:**
 ```
-valid_candidates = precompute_valid_candidates(board) <-
+valid_candidates = precompute_valid_candidates(board)   <-
 
 func solve(board, valid_candidates):
     coordinate = find_first_unsolved_cell(board)
@@ -83,13 +83,13 @@ func solve(board, valid_candidates):
         return True
     
     for each candidate for that coordinate:
-        if is_valid(candidate):
+        if is_valid_and_update(candidate):              <-
             board[coordinate] = candidate_value
-            remove coordinate from valid_candidates <-
+            remove coordinate from valid_candidates     <-
             if solve(board):
                 return True
             board[coordinate] = UNSOVLVED_VALUE
-            put back coordinate into valid_candidates <-
+            put back coordinate into valid_candidates   <-
     return False        
 ```
 
@@ -102,6 +102,8 @@ Hardware: 2015 Intel Core i7
 Min, max, average, std
 
 
+### **Assumptions**
+* input file format of `sudoku.txt`
 
 
 

@@ -19,8 +19,8 @@ class Solution:
     def solveSudoku(self, board):
         self.board = board
         self.val = self.PossibleVals()
-        print(len(self.val))
-        pprint.pprint(self.val)
+        # print(len(self.val))
+        # pprint.pprint(self.val)
         # sys.exit(1)
         # for k, v in self.val.items():
         #     print(k, v)
@@ -49,14 +49,15 @@ class Solution:
     def Solver(self):
         if len(self.val)==0:
             return True #solved
-        print('VAL')
-        pprint.pprint(self.val)
+        # print('VAL')
+        # pprint.pprint(self.val)
         kee = min(self.val.keys(), key=lambda x: len(self.val[x]))
-        print(kee)
+        # print(kee)
         nums = self.val[kee]
         for n in nums:
-            print(f'checking to delete n: {n}')
+            # print(f'checking to delete n: {n}')
             update = {kee:self.val[kee]}
+            # print(f'update: {update}')
             if self.ValidOne(n, kee, update): # valid choice
                 if self.Solver(): # keep solving
                     return True
@@ -68,24 +69,26 @@ class Solution:
 
     def ValidOne(self, n, kee, update):
         self.board[kee[0]][kee[1]] = n
-        print(f'deleting: {self.val[kee]}')
+        # print(f'deleting: {self.val[kee]}')
         del self.val[kee] #better than del pattern?
+        # pprint.pprint(self.val)
         i, j = kee
         for ind in self.val.keys():
             if n in self.val[ind]:
                 if ind[0]==i or ind[1]==j or (ind[0]/3,ind[1]/3)==(i/3,j/3):
                     update[ind] = n
-                    print(f"removing {n} from coord: {ind} with vals {self.val[ind]}")
+                    # print(f"removing {n} from coord: {ind} with vals {self.val[ind]}")
                     self.val[ind].remove(n)
+                    # pprint.pprint(self.val)
                     if len(self.val[ind])==0:
-                        print("returning False")
-                        print_board(self.board)
+                        # print("returning False")
+                        # print_board(self.board)
                         return False
         return True
 
     def undo(self, kee, update):
-        pprint.pprint(self.val)
-        print(f"undoing: key: {kee} update: {update}")
+        # pprint.pprint(self.val)
+        # print(f"undoing: key: {kee} update: {update}")
         #self.board[kee[0]][kee[1]]="xx"
         for k in update:            
             if k not in self.val:
@@ -93,7 +96,7 @@ class Solution:
             else:
                 self.val[k].append(update[k])
         # print_board(self.board)
-        pprint.pprint(self.val)
+        # pprint.pprint(self.val)
         return None
 
 def print_board(board):
@@ -147,7 +150,7 @@ for i, board in enumerate(boards):
     s.solveSudoku(board)
     print("after")
     print_board(s.board)
-    sys.exit(1)
+    # sys.exit(1)
 
 end = time.time()
 print(end - start)
