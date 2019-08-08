@@ -48,7 +48,6 @@ class SudokuSolver():
         """
         Args:
             board (List[List[str]]): Sudoku board
-
         Returns:
             Dict[Tuple[int, int], List[str]]: valid_coordinates for each Coord
         """
@@ -64,7 +63,7 @@ class SudokuSolver():
                 else:
                     val[(i,j)] = []
         for (i,j) in val.keys():
-            inval = d.get(("r",i),[])+d.get(("c",j),[])+d.get((i/3,j/3),[])
+            inval = d.get(("r",i),[])+d.get(("c",j),[])+d.get((i//3,j//3),[])
             val[(i,j)] = [n for n in a if n not in inval ]
         return val
 
@@ -75,7 +74,6 @@ class SudokuSolver():
         """
         Args:
             board (List[List[str]]): Sudoku board
-
         Returns:
             bool
         """
@@ -99,9 +97,7 @@ class SudokuSolver():
 
     def remove_candidate_from_peers(self, candidate, coord, deleted_candidates):
         """Update peers' valid_candidates
-
         If peer valid_candidates goes to None, return False, else return True
-
         Args:
             candidate
             valid_candidates
@@ -121,8 +117,7 @@ class SudokuSolver():
         return True
 
     def undo_deletions(self, coord, deleted_candidates):
-        # pprint(self.valid_candidates)
-        # print(f"undoing: key: {coord} update: {deleted}")
+        print(f"undoing: key: {coord} update: {deleted_candidates}")
         for coord in deleted_candidates:
             if coord not in self.valid_candidates:
                 self.valid_candidates[coord] = deleted_candidates[coord]
@@ -157,9 +152,9 @@ if __name__=="__main__":
 
     boards = load_all_sudoku_boards('sudoku.txt')
 
-    print(len(boards))
-    print(boards[-1])
-    sys.exit(1)
+    # print(len(boards))
+    # print(boards[-1])
+    # sys.exit(1)
     start = time.time()
     for i, board in enumerate(boards):
         print(i)

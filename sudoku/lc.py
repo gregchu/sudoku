@@ -41,7 +41,7 @@ class Solution:
         # for k, v in d.items():
         #     print(k, v)
         for (i,j) in val.keys():
-            inval = d.get(("r",i),[])+d.get(("c",j),[])+d.get((i/3,j/3),[])
+            inval = d.get(("r",i),[])+d.get(("c",j),[])+d.get((i//3,j//3),[])
             val[(i,j)] = [n for n in a if n not in inval ]
         return val
 # USE NAMED_TUPED (ROW, COL)
@@ -55,9 +55,9 @@ class Solution:
         # print(kee)
         nums = self.val[kee]
         for n in nums:
-            # print(f'checking to delete n: {n}')
+            # print('checking to delete n: {}'.format(n))
             update = {kee:self.val[kee]}
-            # print(f'update: {update}')
+            # print('update: {}'.format(update))
             if self.ValidOne(n, kee, update): # valid choice
                 if self.Solver(): # keep solving
                     return True
@@ -69,15 +69,15 @@ class Solution:
 
     def ValidOne(self, n, kee, update):
         self.board[kee[0]][kee[1]] = n
-        # print(f'deleting: {self.val[kee]}')
+        # print('deleting: {}'.format(self.val[kee]))
         del self.val[kee] #better than del pattern?
         # pprint.pprint(self.val)
         i, j = kee
         for ind in self.val.keys():
             if n in self.val[ind]:
-                if ind[0]==i or ind[1]==j or (ind[0]/3,ind[1]/3)==(i/3,j/3):
+                if ind[0]==i or ind[1]==j or (ind[0]//3,ind[1]//3)==(i//3,j//3):
                     update[ind] = n
-                    # print(f"removing {n} from coord: {ind} with vals {self.val[ind]}")
+                    # print("removing {} from coord: {} with vals {}".format(n, ind, self.val[ind]))
                     self.val[ind].remove(n)
                     # pprint.pprint(self.val)
                     if len(self.val[ind])==0:
@@ -88,8 +88,8 @@ class Solution:
 
     def undo(self, kee, update):
         # pprint.pprint(self.val)
-        # print(f"undoing: key: {kee} update: {update}")
-        #self.board[kee[0]][kee[1]]="xx"
+        # print("undoing: key: {} update: {}".format(kee, update))
+        self.board[kee[0]][kee[1]]='0'
         for k in update:            
             if k not in self.val:
                 self.val[k]= update[k]
@@ -136,7 +136,7 @@ def load_euler_sudoku_boards(boards_fn):
         # sys.exit(1)
         # for j, c in enumerate(line):
             # board[i%10][j]= c
-    
+    all_boards.append(board)
     return all_boards
 import time
 start = time.time()
