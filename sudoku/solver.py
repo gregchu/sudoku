@@ -38,9 +38,9 @@ class Solver():
             board (List[List[str]])
         """
         self.board = board
-        self.candidates_per_coord = self.compute_candidates()
-        pprint.pprint(self.candidates_per_coord)
-        sys.exit(1)
+        self.valid_candidates = self.compute_candidates()
+        pprint.pprint(self.valid_candidates)
+        sys.exit(1) 
         self._solve()
     
     def compute_candidates(self):
@@ -83,12 +83,12 @@ class Solver():
         if not self.candidates_per_coord:
             return True #base case
         print('VAL')
-        pprint.pprint(self.candidates_per_coord)
-        key = min(self.candidates_per_coord.keys(), key=lambda x: len(self.candidates_per_coord[x]))
+        pprint.pprint(self.valid_candidates)
+        key = min(self.valid_candidates.keys(), key=lambda x: len(self.valid_candidates[x]))
         print(key)
-        for candidate in self.candidates_per_coord[key]:
+        for candidate in self.valid_candidates[key]:
             print(f'checking to delete n: {n}')
-            update = {kee:self.candidates_per_coord[kee]}
+            update = {kee:self.valid_candidates[kee]}
             if self.ValidOne(n, kee, update): # valid choice
                 if self._solve(): # keep solving
                     return True
@@ -98,7 +98,7 @@ class Solver():
     def ValidOne(self, n, kee, update):
         self.board[kee[0]][kee[1]] = n
         print(f'deleting: {self.candidates_per_coord[kee]}')
-        del self.candidates_per_coord[kee] #better than del pattern?
+        del self.valid_candidates[kee] #better than del pattern?
         i, j = kee
         for ind in self.candidates_per_coord.keys():
             if n in self.candidates_per_coord[ind]:
