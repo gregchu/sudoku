@@ -34,7 +34,7 @@ func solve(board):
             if solve(board):
                 return True
             board[coordinate] = UNSOVLVED_VALUE
-    return False        
+    return False
 ```
 
 ### **Results**
@@ -83,13 +83,16 @@ func solve(board, valid_candidates):
         return True
     
     for each candidate for that coordinate:
-        if is_valid_and_update(candidate):              <-
+        remove coordinate from valid_candidates         <-
+        remove candidate from peers                     <-
+        if is_valid_removal(candidate):                 <-
             board[coordinate] = candidate_value
-            remove coordinate from valid_candidates     <-
             if solve(board):
                 return True
+
             board[coordinate] = UNSOVLVED_VALUE
             put back coordinate into valid_candidates   <-
+            put back candidate into peers               <-
     return False        
 ```
 

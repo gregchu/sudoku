@@ -23,8 +23,7 @@ def solve(bo):
     find = find_empty(bo)
     if not find:
         return True
-    else:
-        row, col = find
+    row, col = find
 
     for i in range(1,10):
         if valid(bo, i, (row, col)):
@@ -124,6 +123,7 @@ for i, board in enumerate(boards):
     solve(x)
     print(i)
     print_board(x)
+    print("")
 
 
 end = time.time()
