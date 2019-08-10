@@ -46,7 +46,8 @@ class SudokuSolver():
         self.board = board
         self.candidates = self.precompute_candidates()
         self.peers = self.precompute_peers()
-        # pprint(self.candidates)
+        # self.deleted = defaultdict(list)
+        pprint(self.candidates)
 
     def solve(self):
         """
@@ -56,18 +57,21 @@ class SudokuSolver():
             bool
         """
         pos = self.find_unsolved_cell()
+        print(f'find unsolved cell pos: {pos}')
         if pos is None:
             return True
 
         for candidate in self.candidates[pos]:
-            save_state = copy.deepcopy(self.candidates)
-            # print(f"solving for candidate {candidate} at pos {pos}")
-            if self.is_valid(pos, candidate):
+            print(f"solving for candidate {candidate} at pos {pos}")
+            # pprint(self.candidates)
+            deleted = {pos: self.candidates[pos]}
+            print('update: {}'.format(deleted))
+            if self.is_valid(pos, candidate, deleted):
                 self.board[pos[0]][pos[1]] = candidate
                 if self.solve():
                     return True
-
-            self.undo(save_state)
+            print(f"about to call undo at candidate {candidate} for pos {pos}")
+            self.undo(pos, deleted)
         return False
 
     def find_unsolved_cell(self):
@@ -75,7 +79,7 @@ class SudokuSolver():
             return None
         return min(self.candidates.keys(), key=lambda i: len(self.candidates[i]))
 
-    def is_valid(self, pos, candidate):
+    def is_valid(self, pos, candidate, deleted):
         """Update peers' valid_candidates
         If peer valid_candidates goes to None, return False, else return True
         Args:
@@ -86,24 +90,38 @@ class SudokuSolver():
         Returns:
             bool: if unsuccessful candidate removal b/c empty list
         """
-        # print(f"deleting pos: {pos}")
+        print(f"deleting pos: {pos}")
+        pprint(deleted)
         del self.candidates[pos]
         for peer in self.peers[pos]:
             if peer not in self.candidates:
                 continue
 
-            # print(f"deleting candidate {candidate} from peer {peer}")
             if candidate in self.candidates[peer]:
+                print(f"deleting candidate {candidate} from peer {peer}")
+                deleted[peer] = candidate
                 self.candidates[peer].remove(candidate)
+                
                 if len(self.candidates[peer])==0:
-                    # pprint(self.candidates)
-                    # print("returning False")
+                    print(f"empty candidate list for peer pos: {peer}")
+                    pprint(self.candidates)
+                    print("returning False")
+                    pprint(deleted)
                     return False
         return True
 
-    def undo(self, saved_state):
+    def undo(self, pos, deleted):
+        print("undoing: pos: {} update: {}".format(pos, deleted))
+        for pos, candidates in deleted.items():
+            self.candidates[pos].extend(candidates)
+        # for k in deleted:
+        #     if k not in self.candidates:
+        #         self.candidates[k] = deleted[k]
+        #     else:
+        #         self.candidates[k].append(deleted[k])
+        return None
         # print(f"putting back deleted_candidates: {deleted_candidates}")
-        self.candidates = saved_state
+        # self.candidates = saved_state
         # for pos in deleted_candidates:
             # self.candidates[pos].append(deleted_candidates[pos])
 
@@ -168,7 +186,7 @@ def print_board(bo):
 import time
 if __name__=="__main__":
 
-    boards = load_all_sudoku_boards('sudoku.txt')
+    boards = load_all_sudoku_boards('sudokutest.txt')
 
     # print(len(boards))
     # print(boards[-1])
@@ -182,7 +200,7 @@ if __name__=="__main__":
         solver.solve()
         print("after")
         print_board(board)
-        # sys.exit(1)
+        sys.exit(1)
 
     end = time.time()
     print(end - start)

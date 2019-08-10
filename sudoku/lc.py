@@ -1,7 +1,7 @@
 # board = [["5","3",".",".","7",".",".",".","."],["6",".",".","1","9","5",".",".","."],[".","9","8",".",".",".",".","6","."],["8",".",".",".","6",".",".",".","3"],["4",".",".","8",".","3",".",".","1"],["7",".",".",".","2",".",".",".","6"],[".","6",".",".",".",".","2","8","."],[".",".",".","4","1","9",".",".","5"],[".",".",".",".","8",".",".","7","9"]]
 import sys
 import json
-import pprint
+from pprint import pprint
 from collections import namedtuple
 
 # instead of PossibleVals,
@@ -55,12 +55,13 @@ class Solution:
         # print(kee)
         nums = self.val[kee]
         for n in nums:
-            # print('checking to delete n: {}'.format(n))
+            print('solving for candidate {} at pos {}'.format(n, kee))
             update = {kee:self.val[kee]}
-            # print('update: {}'.format(update))
+            print('update: {}'.format(update))
             if self.ValidOne(n, kee, update): # valid choice
                 if self.Solver(): # keep solving
                     return True
+            print(f"about to call undo at candidate {n} for pos {kee}")
             self.undo(kee, update) # invalid choice or didn't solve it => undo
         return False
 
@@ -69,27 +70,30 @@ class Solution:
 
     def ValidOne(self, n, kee, update):
         self.board[kee[0]][kee[1]] = n
-        # print('deleting: {}'.format(self.val[kee]))
+        print('deleting pos {}'.format(kee))
         del self.val[kee] #better than del pattern?
-        # pprint.pprint(self.val)
+        pprint(update)
         i, j = kee
         for ind in self.val.keys():
             if n in self.val[ind]:
                 if ind[0]==i or ind[1]==j or (ind[0]//3,ind[1]//3)==(i//3,j//3):
                     update[ind] = n
-                    # print("removing {} from coord: {} with vals {}".format(n, ind, self.val[ind]))
+                    print("deleting candidate {} from peer {}".format(n, ind))
                     self.val[ind].remove(n)
                     # pprint.pprint(self.val)
                     if len(self.val[ind])==0:
+                        print(f"empty candidate list for peer pos: {ind}")
+                        pprint(self.val)
                         print("returning False")
                         # print_board(self.board)
+                        pprint(update)
                         return False
         return True
 
     def undo(self, kee, update):
         # pprint.pprint(self.val)
-        # print("undoing: key: {} update: {}".format(kee, update))
-        self.board[kee[0]][kee[1]]='0'
+        print("undoing: key: {} update: {}".format(kee, update))
+        # self.board[kee[0]][kee[1]]='0'
         for k in update:            
             if k not in self.val:
                 self.val[k]= update[k]
@@ -141,7 +145,7 @@ def load_euler_sudoku_boards(boards_fn):
 import time
 start = time.time()
 
-boards = load_euler_sudoku_boards('sudoku.txt')
+boards = load_euler_sudoku_boards('sudokutest.txt')
 for i, board in enumerate(boards):
     print(i)
     print("before")
