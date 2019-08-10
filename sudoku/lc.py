@@ -81,7 +81,7 @@ class Solution:
                     self.val[ind].remove(n)
                     # pprint.pprint(self.val)
                     if len(self.val[ind])==0:
-                        # print("returning False")
+                        print("returning False")
                         # print_board(self.board)
                         return False
         return True

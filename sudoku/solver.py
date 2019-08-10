@@ -3,7 +3,7 @@ import sys
 import argparse
 from collections import namedtuple, defaultdict
 from pprint import pprint
-
+import copy
 UNSOLVED_VALUE = '0'
 
 Coord = namedtuple('Coord', ['row', 'col'])
@@ -46,8 +46,7 @@ class SudokuSolver():
         self.board = board
         self.candidates = self.precompute_candidates()
         self.peers = self.precompute_peers()
-        pprint(self.candidates)
-        # sys.exit(1)
+        # pprint(self.candidates)
 
     def solve(self):
         """
@@ -61,13 +60,14 @@ class SudokuSolver():
             return True
 
         for candidate in self.candidates[pos]:
-            deleted_candidates = {pos: self.candidates[pos]}
-            if self.is_valid(pos, candidate, deleted_candidates):
+            save_state = copy.deepcopy(self.candidates)
+            # print(f"solving for candidate {candidate} at pos {pos}")
+            if self.is_valid(pos, candidate):
                 self.board[pos[0]][pos[1]] = candidate
                 if self.solve():
                     return True
 
-            self.undo(pos, deleted_candidates)
+            self.undo(save_state)
         return False
 
     def find_unsolved_cell(self):
@@ -75,7 +75,7 @@ class SudokuSolver():
             return None
         return min(self.candidates.keys(), key=lambda i: len(self.candidates[i]))
 
-    def is_valid(self, pos, candidate, deleted_candidates):
+    def is_valid(self, pos, candidate):
         """Update peers' valid_candidates
         If peer valid_candidates goes to None, return False, else return True
         Args:
@@ -86,26 +86,26 @@ class SudokuSolver():
         Returns:
             bool: if unsuccessful candidate removal b/c empty list
         """
-        print(f"deleting pos: {pos}")
+        # print(f"deleting pos: {pos}")
         del self.candidates[pos]
         for peer in self.peers[pos]:
-            if peer in self.candidates:
-                print(f"removing {candidate} from peer: {peer}")
-                # pprint(self.candidates)
-                if candidate in self.candidates[peer]:
-                    self.candidates[peer].remove(candidate)
-                deleted_candidates[peer] = candidate
+            if peer not in self.candidates:
+                continue
+
+            # print(f"deleting candidate {candidate} from peer {peer}")
+            if candidate in self.candidates[peer]:
+                self.candidates[peer].remove(candidate)
                 if len(self.candidates[peer])==0:
+                    # pprint(self.candidates)
+                    # print("returning False")
                     return False
         return True
 
-    def undo(self, pos, deleted_candidates):
-        print(f"undoing: key: {pos} update: {deleted_candidates}")
-        for dpos in deleted_candidates:
-            if dpos not in self.candidates.keys():
-                self.candidates[pos] = deleted_candidates[pos]
-            else:
-                self.candidates[pos].append(deleted_candidates[pos])
+    def undo(self, saved_state):
+        # print(f"putting back deleted_candidates: {deleted_candidates}")
+        self.candidates = saved_state
+        # for pos in deleted_candidates:
+            # self.candidates[pos].append(deleted_candidates[pos])
 
     def precompute_candidates(self):
         """
@@ -115,7 +115,8 @@ class SudokuSolver():
             Dict[Tuple[int, int], List[str]]: valid_coordinates for each Coord
         """
         a = "123456789"
-        d, val = {}, {}
+        d = {}
+        val = defaultdict(list)
         for i in range(9):
             for j in range(9):
                 ele = board[i][j]
@@ -141,6 +142,9 @@ class SudokuSolver():
         return peers
 
 def are_peers(p1, p2):
+    if p1 == p2:
+        return False
+
     return (
         (p1[0]//3, p1[1]//3) == (p2[0]//3, p2[1]//3) # same box
         or p1[0] == p2[0] # same row
@@ -174,11 +178,8 @@ if __name__=="__main__":
         print(i)
         print("before")
         print_board(board)
-    # try:÷
         solver = SudokuSolver(board)
         solver.solve()
-        # except Exception as e:
-            # print(e)
         print("after")
         print_board(board)
         # sys.exit(1)
