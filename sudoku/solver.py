@@ -3,7 +3,7 @@ import sys
 import argparse
 from collections import namedtuple, defaultdict
 from pprint import pprint
-import copy
+
 UNSOLVED_VALUE = '0'
 
 Coord = namedtuple('Coord', ['row', 'col'])
@@ -14,6 +14,7 @@ def init_board():
 def load_all_sudoku_boards(boards_fn):
     """Assumptions about board txt file..."""
     all_boards = []
+    lines = []
     try:
         with open(boards_fn) as rf:
             lines = rf.readlines()
@@ -46,7 +47,6 @@ class SudokuSolver():
         self.board = board
         self.candidates = self.precompute_candidates()
         self.peers = self.precompute_peers()
-        # self.deleted = defaultdict(list)
         pprint(self.candidates)
 
     def solve(self):
@@ -64,14 +64,14 @@ class SudokuSolver():
         for candidate in self.candidates[pos]:
             print(f"solving for candidate {candidate} at pos {pos}")
             # pprint(self.candidates)
-            deleted = {pos: self.candidates[pos]}
-            print('update: {}'.format(deleted))
-            if self.is_valid(pos, candidate, deleted):
+            deleted_candidates = defaultdict(list)
+            # print('update: {}'.format(deleted))
+            if self.is_valid(pos, candidate, deleted_candidates):
                 self.board[pos[0]][pos[1]] = candidate
                 if self.solve():
                     return True
             print(f"about to call undo at candidate {candidate} for pos {pos}")
-            self.undo(pos, deleted)
+            self.backtrack(pos, deleted_candidates)
         return False
 
     def find_unsolved_cell(self):
@@ -79,7 +79,7 @@ class SudokuSolver():
             return None
         return min(self.candidates.keys(), key=lambda i: len(self.candidates[i]))
 
-    def is_valid(self, pos, candidate, deleted):
+    def is_valid(self, pos, candidate, deleted_candidates):
         """Update peers' valid_candidates
         If peer valid_candidates goes to None, return False, else return True
         Args:
@@ -91,7 +91,8 @@ class SudokuSolver():
             bool: if unsuccessful candidate removal b/c empty list
         """
         print(f"deleting pos: {pos}")
-        pprint(deleted)
+        pprint(deleted_candidates)
+        deleted_candidates[pos].extend(self.candidates[pos])
         del self.candidates[pos]
         for peer in self.peers[pos]:
             if peer not in self.candidates:
@@ -99,20 +100,29 @@ class SudokuSolver():
 
             if candidate in self.candidates[peer]:
                 print(f"deleting candidate {candidate} from peer {peer}")
-                deleted[peer] = candidate
+                # deleted[peer] = candidate
+                deleted_candidates[peer].append(candidate)
+                print("deleted_stack:")
+                pprint(deleted_candidates)
+                # pprint(deleted)
                 self.candidates[peer].remove(candidate)
                 
                 if len(self.candidates[peer])==0:
                     print(f"empty candidate list for peer pos: {peer}")
                     pprint(self.candidates)
                     print("returning False")
-                    pprint(deleted)
+                    pprint(deleted_candidates)
                     return False
         return True
 
-    def undo(self, pos, deleted):
-        print("undoing: pos: {} update: {}".format(pos, deleted))
-        for pos, candidates in deleted.items():
+    def backtrack(self, pos, deleted_candidates):
+        print("undoing: pos: {} update: {}".format(pos, deleted_candidates))
+        
+        # for pos, candidates in
+        # for item in deleted_stack:
+        #     print(item.keys())
+        #     self.candidates[item.keys()[0]].extend(item.values)
+        for pos, candidates in deleted_candidates.items():
             self.candidates[pos].extend(candidates)
         # for k in deleted:
         #     if k not in self.candidates:
@@ -155,8 +165,8 @@ class SudokuSolver():
             for c in range(len(self.board[1])):
                 for i in range(len(self.board[0])):
                     for j in range(len(self.board[1])):
-                        if are_peers((r,c), (i,j)):
-                            peers[(r,c)].append((i,j))
+                        if are_peers((r, c), (i, j)):
+                            peers[(r, c)].append((i, j))
         return peers
 
 def are_peers(p1, p2):
@@ -172,7 +182,7 @@ def are_peers(p1, p2):
 def print_board(bo):
     for i in range(len(bo)):
         if i % 3 == 0 and i != 0:
-            print("- - - - - - - - - - - - - ")
+            print("--------------------")
 
         for j in range(len(bo[0])):
             if j % 3 == 0 and j != 0:
