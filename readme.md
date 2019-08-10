@@ -1,39 +1,39 @@
 # Usage
 
 ```
-docker compose
+sh docker_build.sh
 python solver.py sudoku.txt
 ```
 Expected output: `sudoku.log`
 
 # Approaches
 
-In the large space of potential approaches for Sudoku solvers, I started with the simplest, non-exhaustive approach, and measured the performance. Then, by applying a single heuristic to this approach, I was able to reach a satisfactory level of performance.
+In the large space of potential approaches for Sudoku solvers, I started with the simplest, non-exhaustive approach, and measured the performance. Then, by applying a single Sudoku-specific heuristic to this approach, I was able to reach a satisfactory level of performance.
 
-Brute-force wasn't an option as a first approach since the complexity is `O(n^m)`, where `n` is the number of potential values per cell (9) and `m` is the number of unsolved cells.
+Brute-force wasn't an option as a first approach since the complexity is `O(n^m)`, where `n` is the number of possible values per cell (9) and `m` is the number of unsolved cells.
 
 ## 1. Depth first search with backtracking
 
 ### **Algorithm:**
 1. Find the first unsolved cell (in raster-scan order)  
     a. If we cannot find an unsolved cell, the board is solved (base case)
-2. For each candidate (1-9)  
-    a. If candidate is valid (does not break Sudoku rules), assign that cell with candidate, and return (recurse) to step 1.  
-3. If no candidates in step 2) are valid, backtrack up the decision tree and try a new candidate for the previous node
+2. For each possible value (1-9)  
+    a. If value is valid (does not break Sudoku rules), assign that cell with value, and return (recurse) to step 1.  
+3. If no values in step 2) are valid, undo the value assignment, backtrack up the tree and try a new value for the previous node
 
 ### **Pseudocode:**
 ```
 func solve(board):
-    coordinate = find_first_unsolved_cell(board)
-    if no coordinate exists:
+    pos = find_unsolved_cell(board)
+    if no pos exists:
         return True
     
-    for each candidate:
-        if is_valid(candidate):
-            board[coordinate] = candidate_value
+    for each value:
+        if is_valid(board, pos, value):
+            board[pos] = value
             if solve(board):
                 return True
-            board[coordinate] = UNSOVLVED_VALUE
+        undo(board[pos])
     return False
 ```
 
@@ -42,61 +42,50 @@ This solved the 50 sudoku boards in ~25 seconds on an 2015 Intel Core i7.
 
 ## 2. DFS with backtracking + heuristic
 
-If we depict this depth first search traversal of a Sudoku board as an N-ary decision tree, the first unsolved cell is the root node, and each candidate can be represented as a child node. In approach 1), we arbitrarily chose to solve the unsolved cells in raster-scan order. 
+All DFS can be interpreted as traversal through an N-ary tree. In our case, the first unsolved cell is the root node, and each possible value can be represented as a child node. 
 
 ### **Hueristic:**
 
-If we precompute **VALID\*** candidates for each unsolved cell, instead of choosing unsolved cells in raster-scan order, we can choose to solve unsolved cells in order of increasing # of valid candidates.
+In approach 1), we arbitrarily chose to solve the unsolved cells in raster-scan order. If we precompute the set of *possible* values for each unsolved cell that follows Sudoku rules, we can choose to continuously solve unsolved cells with the least # of possible values.
 
-This heuristic significantly constrains the search space. For example, if we choose an unsolved cell with 5 candidates, there are 5 different DFS paths available, whereas if we choose an unsolved cell with 2 candidates, there are only 2 different DFS paths available.
+This heuristic significantly constrains the search space. For example, if we choose an unsolved cell with 5 possible values, there are 5 child nodes for DFS to initiate traversal, whereas if we choose an unsolved cell with 2 possible values, there are only 2 different DFS paths available.
 
 ### **Algorithm:**
 
-0. For each unsolved cell, compute the set of valid\* candidates and store this in a `dict`
+0. For each unsolved cell, compute the set of possible values and store this in a `map`. By precomputing candidates, we can track unsolved cells not by the unsolved value at the start but by if it exists in the `map`.
 
 Then, the algorithm is the same as in Approach 1 except for a couple details (bolded):
 
-1. Find the first unsolved cell **(with the least # of valid candidates that were precomputed in step 0.)**  
+1. Find the first unsolved cell **(with the least # of possible values that were precomputed in step 0.)**  
     a. If we cannot find an unsolved cell, the board is solved (base case)
-2. For each candidate **(from the precomputed list of valid candidates)**  
-    a. If candidate is valid (does not break Sudoku rules  **and does not cause peers to have no valid candidates\****), assign that cell with candidate, and return (recurse) to step 1.  
-3. If no candidates in step 3) are valid, backtrack up the decision tree and try a new candidate for the previous node **and put back valid candidates into `dict`**
+2. For each value **(from the precomputed list)**  
+    a. If value is valid (does not break Sudoku rules  **and does not cause peers to have no possible values left\***), assign that cell with that value, and return (recurse) to step 1.  
+3. If no values in step 3) are valid, backtrack up the decision tree and try a new value for the previous node **and put back possible values into `map`**
 
-Footnotes/elaboration:
+\* 2.a. "and does not cause peers to have no possible values left": 
 
-\* How we define a **valid** candidate:
-
-A valid candidate is a subset of all candidates (1-9) that does not break the rules of Sudoku (no other # in the row, column, or box)
-
-\** 2.a. "and does not cause peers to have no valid candidates": 
-
-When we select a candidate for a cell, we can update the list of valid candidates for all its [peers](http://sudopedia.enjoysudoku.com/Peer.html). If for any peer, the list of valid candidates is updated to None, we've made an error and must backtrack.
-
+When we select a value for a cell, we can update the list of possible values for all its [peers](http://sudopedia.enjoysudoku.com/Peer.html). If for any peer, the list of possible values is updated to None, we've made an error and must backtrack.
 
 ### **Pseudocode:**
 ```
-valid_candidates = precompute_valid_candidates(board)   <-
+values = precompute_possible_values(board)              <-
 
-func solve(board, valid_candidates):
-    coordinate = find_first_unsolved_cell(board)
-    if no coordinate exists:
+func solve(board, values):
+    pos = find_unsolved_cell(board)                     <-
+    if no pos exists:
         return True
     
-    for each candidate for that coordinate:
-        remove coordinate from valid_candidates         <-
-        remove candidate from peers                     <-
-        if is_valid_removal(candidate):                 <-
-            board[coordinate] = candidate_value
+    for each value:
+        if is_valid(board, pos, value):                 <-
+            board[pos] = value
             if solve(board):
                 return True
 
-            board[coordinate] = UNSOVLVED_VALUE
-            put back coordinate into valid_candidates   <-
-            put back candidate into peers               <-
+        undo(board[pos])                            <-
     return False        
 ```
 
-I've added `<-` at the end of each line that is a modification to Approach 1.
+I've added `<-` at the end of each line that is a modification to Approach 1. The overall structure of the algorithm remains the same, but there are modifications of how these methods are implemented.
 
 ### **Results**
 
