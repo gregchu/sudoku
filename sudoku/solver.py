@@ -3,10 +3,14 @@ import sys
 import argparse
 from collections import namedtuple, defaultdict
 from pprint import pprint
+import copy
 
 UNSOLVED_VALUE = '0'
 
 Coord = namedtuple('Coord', ['row', 'col'])
+
+BOARD_SIDE = 9
+BOX_SIDE = 3
 
 def init_board():
     return [['0' for x in range(9)] for y in range(9)]
@@ -45,9 +49,10 @@ class SudokuSolver():
             board (List[List[str]]): Sudoku board
         """
         self.board = board
-        self.candidates = self.precompute_candidates()
         self.peers = self.precompute_peers()
-        pprint(self.candidates)
+        self.candidates = self.precompute_candidates()
+        
+        # pprint(self.candidates)
 
     def solve(self):
         """
@@ -142,22 +147,53 @@ class SudokuSolver():
         Returns:
             Dict[Tuple[int, int], List[str]]: valid_coordinates for each Coord
         """
+
+
         a = "123456789"
-        d = {}
-        val = defaultdict(list)
+        # p = [str(i) for i in range(1, BOARD_SIDE+1)]
+# d = {}
+        candidates = defaultdict(list)
+        solved = defaultdict(list)
+        # board = {}
         for i in range(9):
             for j in range(9):
                 ele = board[i][j]
-                if ele != "0":
-                    d[("r", i)] = d.get(("r", i), []) + [ele]
-                    d[("c", j)] = d.get(("c", j), []) + [ele]
-                    d[(i//3, j//3)] = d.get((i//3, j//3), []) + [ele]
+                if ele == "0":
+                    # d[("r", i)] = d.get(("r", i), []) + [ele]
+                    # d[("c", j)] = d.get(("c", j), []) + [ele]
+                    # d[(i//3, j//3)] = d.get((i//3, j//3), []) + [ele]
+                # else:
+                    candidates[(i,j)] = [str(n) for n in range(1, 10)]
                 else:
-                    val[(i,j)] = []
-        for (i,j) in val.keys():
-            inval = d.get(("r",i),[])+d.get(("c",j),[])+d.get((i//3,j//3),[])
-            val[(i,j)] = [n for n in a if n not in inval ]
-        return val
+                    solved[(i,j)] = ele
+                # else: #unsolved
+                    # val[(i,j)] = []
+                # print(f'd for (i,j) ({i}, {j})')
+                # pprint(d)
+        # pprint(d)
+        # print(len(d))
+        # for 
+        pprint(candidates)
+        print(len(candidates))
+        for spos, val in solved.items():
+            for peer in self.peers[spos]:
+                if peer in candidates and val in candidates[peer]:
+                    candidates[peer].remove(val)
+        
+        # for pos, cans in candidates.items():
+
+        #     for can in cans:
+        #         if not _valid(self.board, can, pos):
+        #             print(f'removing {can} from pos {pos}')
+        #             candidates[pos].remove(can)
+        #             # pprint(candidates)
+        pprint(candidates)
+        print(len(candidates))
+        # for (i,j) in val.keys():
+        #     inval = d.get(("r",i),[])+d.get(("c",j),[])+d.get((i//3,j//3),[])
+        #     val[(i,j)] = [n for n in a if n not in inval ]
+        # pprint(val)
+        return candidates
 
     def precompute_peers(self):
         peers = defaultdict(list)
@@ -192,7 +228,7 @@ def print_board(bo):
                 print(bo[i][j])
             else:
                 print(str(bo[i][j]) + " ", end="")
-
+    
 import time
 if __name__=="__main__":
 

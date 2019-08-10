@@ -48,7 +48,7 @@ All DFS can be interpreted as traversal through an N-ary tree. In our case, the 
 
 In approach 1), we arbitrarily chose to solve the unsolved cells in raster-scan order. If we precompute the set of *possible* values for each unsolved cell that follows Sudoku rules, we can choose to continuously solve unsolved cells with the least # of possible values.
 
-This heuristic significantly constrains the search space. For example, if we choose an unsolved cell with 6 possible values, there are 6 child nodes for DFS to initiate traversal, whereas if we choose an unsolved cell with 2 possible values, there are only 2 different DFS paths available.
+This heuristic significantly constrains the search space. For example, if we choose an unsolved cell with 6 possible values, there are 6 child nodes for DFS to initiate traversal, whereas if we choose an unsolved cell with 2 possible values, there are only 2 different DFS paths available. This is also known as the branching factor of the tree.
 
 ### **Algorithm:**
 
