@@ -3,16 +3,21 @@ import sys
 import re
 import logging
 import argparse
-import traceback
 import statistics
-from collections import defaultdict, namedtuple
+from collections import defaultdict
 from timeit import default_timer as timer
-
-from pprint import pprint
 
 UNSOLVED = '0'
 BOARD_SIDE = 9
 BOX_SIDE = 3
+BOARD_DELIM_REGEX = "Grid \d\d\n"
+LOG_FILE = "log.info"
+
+logging.basicConfig(
+    format='%(asctime)s : %(levelname)s : %(message)s',
+    level=logging.INFO,
+    filename=LOG_FILE,
+)
 
 
 class SudokuSolver:
@@ -24,8 +29,9 @@ class SudokuSolver:
         """
         self.board = board
         self.peers = self.precompute_peers()
+        
+        # existence of a cell position in self.candidates indicates cell is unsolved
         self.candidates = self.precompute_candidates()
-        logging.debug(f"precomputed candidates {self.candidates}")
 
     def solve(self):
         pos = self.find_unsolved_cell()
@@ -33,13 +39,12 @@ class SudokuSolver:
             return True
 
         for candidate in self.candidates[pos]:
-            logging.debug(f"solving for candidate {candidate} at pos {pos}")
             deleted_candidates = defaultdict(list)
             if self.is_valid(pos, candidate, deleted_candidates):
                 self.board[pos[0]][pos[1]] = candidate
                 if self.solve():
                     return True
-            logging.debug(f"backtracking at candidate {candidate} for pos {pos}")
+
             self.backtrack(deleted_candidates)
         return False
 
@@ -54,19 +59,19 @@ class SudokuSolver:
         return min(self.candidates.keys(), key=lambda i: len(self.candidates[i]))
 
     def is_valid(self, pos, candidate, deleted_candidates):
-        """Checks if candidate is a valid for the cell
+        """Checks if candidate is valid for the cell position
 
         Logic: 
-            if candidate assignment causes any peers to have 0 candidates,
-            candidate is not valid and we need to backtrack
+            if candidate assignment for pos causes any peers to reduce to 0 candidates,
+            candidate for pos is not valid and requires backtracking
 
         Args:
             pos (Tuple[int, int]): cell position
             candidate (str): candidate value for cell
-            deleted_candidates (Dict[Tuple[int, int], List[str]]): deleted candidates
+            deleted_candidates (Dict[Tuple[int, int], List[str]])
 
         Returns:
-            bool: if candidate valid for cell
+            bool: if candidate is valid for the cell
         """
         # store deleted candidates in case we need to backtrack
         deleted_candidates[pos].extend(self.candidates[pos])
@@ -74,7 +79,7 @@ class SudokuSolver:
         
         # remove candidate from peers' candidates
         for peer in self.peers[pos]:
-            if peer not in self.candidates: # already solved
+            if peer not in self.candidates: # already solved cell
                 continue
 
             if candidate in self.candidates[peer]:
@@ -90,7 +95,7 @@ class SudokuSolver:
         """Backtrack and put back candidates for consideration
 
         Args:
-            deleted_candidates (Dict[Tuple[int, int], List[str]]): deleted candidates
+            deleted_candidates (Dict[Tuple[int, int], List[str]])
         """
         for pos, candidates in deleted_candidates.items():
             self.candidates[pos].extend(candidates)
@@ -99,11 +104,11 @@ class SudokuSolver:
         """Precompute candidates for each cell
 
         Logic:
-            Initially each cell has 9 candidates (1-9)
+            Initially each unsolved cell has 9 candidates (1-9)
             Remove candidates based on values of peers on initial board
 
         Args:
-            board (List[List[str]]): Sudoku board
+            board (List[List[str]])
 
         Returns:
             Dict[Tuple[int, int], List[str]]: valid_coordinates for each Coord
@@ -142,6 +147,15 @@ class SudokuSolver:
 
 
 def are_peers(p1, p2):
+    """Boolean method to check if 2 positions are peers
+
+    Args:
+        p1 (Tuple[int, int])
+        p2 (Tuple[int, int])
+    
+    Returns:
+        bool: if peers
+    """
     if p1 == p2:
         return False
 
@@ -152,73 +166,140 @@ def are_peers(p1, p2):
     )
 
 
-def board_to_str(bo):
+def board_to_str(board):
+    """Convert board to a string resembling a Sudoku board
+
+    Args:
+        board (List[List[str]])
+    
+    Returns:
+        str
+    """
     s = ""
-    for i in range(len(bo)):
+    for i in range(len(board)):
         if i % BOX_SIDE == 0 and i != 0:
             s += "-----------------------\n"
 
-        for j in range(len(bo[0])):
+        for j in range(len(board[0])):
             if j % BOX_SIDE == 0 and j != 0:
                 s += " | "
 
             if j == BOARD_SIDE-1:
-                s += bo[i][j] + "\n"
+                s += board[i][j] + "\n"
             else:
-                s += bo[i][j] + " "
+                s += board[i][j] + " "
     return s
 
 
 def init_board():
-    return [['0' for x in range(9)] for y in range(9)]
+    """Initialize unsolved board
+
+    Returns:
+        List[List[str]]
+    """
+    return [[UNSOLVED for x in range(BOARD_SIDE)] for y in range(BOARD_SIDE)]
+
+
+def load_all_sudoku_boards(boards_fn):
+    """Load sudoku boards
+
+    We assume the following format:
+        Grid 01
+        003020600
+        900305001
+        001806400
+        008102900
+        700000008
+        006708200
+        002609500
+        800203009
+        005010300
+        Grid 02
+        200080300
+        060070084
+        030500209
+        000105408
+        000000000
+        402706000
+        301007040
+        720040060
+        004010003
+    * 9x9 grids
+    * Each row a consecutive set of characters
+    * Delimited by "Grid XX\n"
+    
+    Args:
+        boards_fn (str): path to txt file containing above Grid data
+    
+    Returns:
+        List[List[List[str]]]: list of boards
+    """
+    boards = []
+
+    with open(boards_fn) as rf:
+        text = rf.read()
+
+    board_strings = filter(None, re.split(BOARD_DELIM_REGEX, text))
+    for bs in board_strings:
+        boards.append(str_to_board(bs.strip()))
+    return boards
 
 
 def str_to_board(s):
-    board = init_board()
+    """Convert a string of the following format:
+        200080300
+        060070084
+        030500209
+        000105408
+        000000000
+        402706000
+        301007040
+        720040060
+        004010003
+       to a board
     
-def load_all_sudoku_boards(boards_fn):
-    """Assumptions about board txt file..."""
-    all_boards = []
-    try:
-        with open(boards_fn) as rf:
-            text = rf.read()
-    except FileNotFoundError as fe:
-        print(f"FileNotFoundError: {fe}")
-
-    boards = re.split(r"Grid \d\d", text)
+    Args:
+        s (str)
+    
+    Returns:
+        List[List[str]]: board
+    """
     board = init_board()
-    for i, line in enumerate(lines):
-        row = i%10-1
-        if i==0: 
-            continue
-        if i%10==0:
-            all_boards.append(board)
-            board = init_board()
-            continue
-        board[row] = list(line.strip())
-    all_boards.append(board)
-    return all_boards
+    lines = s.split("\n")
+    for row, line in enumerate(s.strip().split("\n")):
+        board[row] = list(line)
+    return board
 
 
 if __name__=="__main__":
+    p = argparse.ArgumentParser()
+    p.add_argument("--boards_file", default="sudoku.txt")
+    args = p.parse_args()
 
-    boards = load_all_sudoku_boards('tests/sudokutest.txt')
-    logging.basicConfig(level=logging.INFO)
-    
+    try:
+        boards = load_all_sudoku_boards(args.boards_file)
+    except:
+        logging.error(f"Error loading {args.boards_file}. Exiting...", exc_info=True)
+        sys.exit(1)
+
     t = []
     for i, board in enumerate(boards):
         logging.info(f"Grid {i+1}")
-        logging.info(f"Unsolved board: \n{board_to_str(board)}")
-        start = timer()
         try:
+            logging.info(f"Unsolved board: \n{board_to_str(board)}")
+            start = timer()
+        
             solver = SudokuSolver(board)
             solver.solve()
-        except Exception as e:
-            logging.error(traceback.format_exc())
-        end = timer()
-        logging.info(f"Solved board: \n{board_to_str(board)}")
-        t.append(end - start)
+            end = timer()
+            logging.info(f"Solved board: \n{board_to_str(board)}")
+            t.append(end - start)
+        except:
+            logging.error(f"Error processing Grid {i+1}", exc_info=True)
 
-    logging.info(f"Mean (s): {statistics.mean(t)}")
-    logging.info(f"STD (s): {statistics.stdev(t)}")
-    logging.info(f"Total (s): {sum(t)}")
+    try:
+        logging.info(f"Mean (s): {statistics.mean(t)}")
+        logging.info(f"STD (s): {statistics.stdev(t)}")
+        logging.info(f"Total (s): {sum(t)}")
+    except:
+        logging.error("Error computing statistics", exc_info=True)
