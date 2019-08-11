@@ -1,11 +1,25 @@
-# Usage
+# Sudoku Solver
+
+## Usage
 
 Requires `python 3.6+`
 
 ```
-python sudoku/solver.py --boards_file sudoku.txt
+python3 sudoku/solver.py --boards_file sudoku.txt
+more log.info
 ```
 Log output: `log.info`
+
+### Optional Docker usage
+```
+docker build -t sudoku:1.0 .
+docker run -it sudoku:1.0 bash
+```
+And once in the container:
+```
+python3 sudoku/solver.py --boards_file sudoku.txt
+more log.info
+```
 
 # Approaches
 
@@ -38,7 +52,7 @@ func solve(board):
     return False
 ```
 
-### **Results**
+### **Results**  
 Total time for the 50 Sudoku puzzles: 25s  
 Hardware: 2015 Intel Core i7
 
@@ -46,7 +60,7 @@ Hardware: 2015 Intel Core i7
 
 DFS can be interpreted as traversal through an N-ary tree. In our case, the first unsolved cell is the root node, and each candidate can be represented as a child node. 
 
-### **Hueristic:**
+### **Heuristic:**
 
 In approach 1), we made two arbitrary decisions:  
 
@@ -104,7 +118,7 @@ The overall structure of the algorithm remains the same. `<-` indicates modifica
 
 ### **Results**
 
-Total time for the 50 Sudoku puzzles: 0.351s
+Total time for the 50 Sudoku puzzles: 0.351s  
 Hardware: 2015 Intel Core i7
 
 ### **Assumptions**
