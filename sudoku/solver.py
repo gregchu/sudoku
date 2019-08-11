@@ -19,7 +19,7 @@ logging.basicConfig(
     filename=LOG_FILE,
 )
 
-import pprint
+
 class SudokuSolver:
     def __init__(self, board):
         """Sudoku Solver
@@ -29,7 +29,6 @@ class SudokuSolver:
         """
         self.board = board
         self.peers = precompute_peers()
-        print(self.peers)
 
         # existence of a cell position in self.candidates indicates cell is unsolved
         self.candidates = precompute_candidates(board, self.peers)
@@ -118,7 +117,7 @@ def precompute_peers():
     return peers
 
 
-def precompute_candidates(board, peers):
+def precompute_candidates(board, peers, unsolved=UNSOLVED, side=BOARD_SIDE):
     """Precompute candidates for each cell
 
     Logic:
@@ -134,11 +133,11 @@ def precompute_candidates(board, peers):
     """
     candidates = defaultdict(list)
     solved = defaultdict(list)
-    for i in range(BOARD_SIDE):
-        for j in range(BOARD_SIDE):
+    for i in range(side):
+        for j in range(side):
             val = board[i][j]
-            if val == UNSOLVED:
-                candidates[(i, j)] = [n for n in range(1, BOARD_SIDE+1)]
+            if val == unsolved:
+                candidates[(i, j)] = [n for n in range(1, side+1)]
             else:
                 solved[(i, j)] = val
 
@@ -204,7 +203,7 @@ def init_board():
     return [[UNSOLVED for x in range(BOARD_SIDE)] for y in range(BOARD_SIDE)]
 
 
-def load_all_sudoku_boards(boards_fn):
+def load_sudoku_boards(boards_fn):
     """Load sudoku boards
 
     We assume the following format:
@@ -284,7 +283,7 @@ if __name__=="__main__":
     args = p.parse_args()
 
     try:
-        boards = load_all_sudoku_boards(args.boards_file)
+        boards = load_sudoku_boards(args.boards_file)
     except:
         logging.error(f"Error loading {args.boards_file}. Exiting...", exc_info=True)
         sys.exit(1)
@@ -304,8 +303,11 @@ if __name__=="__main__":
             logging.error(f"Error processing Grid {i+1}", exc_info=True)
 
     try:
-        logging.info(f"Mean (s): {statistics.mean(t)}")
-        logging.info(f"STD (s): {statistics.stdev(t)}")
         logging.info(f"Total (s): {sum(t)}")
+        logging.info(f"Mean (s): {statistics.mean(t)}")
+        if len(t) > 1:
+            logging.info(f"STD (s): {statistics.stdev(t)}")
+        logging.info(f"Min (s): {min(t)}")
+        logging.info(f"Max (s): {max(t)}")
     except:
         logging.error("Error computing statistics", exc_info=True)
