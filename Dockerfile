@@ -7,3 +7,5 @@ RUN apt-get -qq update \
 ENV APP_DIR=/app/
 COPY . $APP_DIR
 WORKDIR $APP_DIR
+
+RUN pip install . --upgrade

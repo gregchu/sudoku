@@ -7,7 +7,7 @@ import statistics
 from collections import defaultdict
 from timeit import default_timer as timer
 
-UNSOLVED = '0'
+UNSOLVED = 0
 BOARD_SIDE = 9
 BOX_SIDE = 3
 BOARD_DELIM_REGEX = "Grid \d\d\n"
@@ -19,19 +19,20 @@ logging.basicConfig(
     filename=LOG_FILE,
 )
 
-
+import pprint
 class SudokuSolver:
     def __init__(self, board):
         """Sudoku Solver
 
         Args:
-            board (List[List[str]]): Sudoku board
+            board (List[List[int]]): Sudoku board
         """
         self.board = board
-        self.peers = self.precompute_peers()
-        
+        self.peers = precompute_peers()
+        print(self.peers)
+
         # existence of a cell position in self.candidates indicates cell is unsolved
-        self.candidates = self.precompute_candidates()
+        self.candidates = precompute_candidates(board, self.peers)
 
     def solve(self):
         pos = self.find_unsolved_cell()
@@ -95,55 +96,58 @@ class SudokuSolver:
         """Backtrack and put back candidates for consideration
 
         Args:
-            deleted_candidates (Dict[Tuple[int, int], List[str]])
+            deleted_candidates (Dict[Tuple[int, int], List[int]])
         """
         for pos, candidates in deleted_candidates.items():
             self.candidates[pos].extend(candidates)
 
-    def precompute_candidates(self):
-        """Precompute candidates for each cell
 
-        Logic:
-            Initially each unsolved cell has 9 candidates (1-9)
-            Remove candidates based on values of peers on initial board
+def precompute_peers():
+    """Precompute peers for easy lookup
 
-        Args:
-            board (List[List[str]])
+    Returns:
+        Dict[Tuple[int,int], List[Tuple[int, int]]: key is position, value is list of peer positions
+    """
+    peers = defaultdict(list)
+    for r in range(BOARD_SIDE):
+        for c in range(BOARD_SIDE):
+            for i in range(BOARD_SIDE):
+                for j in range(BOARD_SIDE):
+                    if are_peers((r, c), (i, j)):
+                        peers[(r, c)].append((i, j))
+    return peers
 
-        Returns:
-            Dict[Tuple[int, int], List[str]]: valid_coordinates for each Coord
-        """
-        candidates = defaultdict(list)
-        solved = defaultdict(list)
-        for i in range(BOARD_SIDE):
-            for j in range(BOARD_SIDE):
-                val = self.board[i][j]
-                if val == UNSOLVED:
-                    candidates[(i, j)] = [str(n) for n in range(1, BOARD_SIDE+1)]
-                else:
-                    solved[(i, j)] = val
 
-        for solved_pos, val in solved.items():
-            for peer in self.peers[solved_pos]:
-                if peer in candidates and val in candidates[peer]:
-                    candidates[peer].remove(val)
+def precompute_candidates(board, peers):
+    """Precompute candidates for each cell
 
-        return candidates
+    Logic:
+        Initially each unsolved cell has 9 candidates (1-9)
+        Remove candidates based on values of peers on initial board
 
-    def precompute_peers(self):
-        """Precompute peers for easy lookup
+    Args:
+        board (List[List[int]])
+        peers (Dict[Tuple[int,int], List[Tuple[int, int]])
 
-        Returns:
-            Dict[Tuple[int,int], List[Tuple[int, int]]
-        """
-        peers = defaultdict(list)
-        for r in range(BOARD_SIDE):
-            for c in range(BOARD_SIDE):
-                for i in range(BOARD_SIDE):
-                    for j in range(BOARD_SIDE):
-                        if are_peers((r, c), (i, j)):
-                            peers[(r, c)].append((i, j))
-        return peers
+    Returns:
+        Dict[Tuple[int, int], List[int]]: candidates
+    """
+    candidates = defaultdict(list)
+    solved = defaultdict(list)
+    for i in range(BOARD_SIDE):
+        for j in range(BOARD_SIDE):
+            val = board[i][j]
+            if val == UNSOLVED:
+                candidates[(i, j)] = [n for n in range(1, BOARD_SIDE+1)]
+            else:
+                solved[(i, j)] = val
+
+    for solved_pos, val in solved.items():
+        for peer in peers[solved_pos]:
+            if peer in candidates and val in candidates[peer]:
+                candidates[peer].remove(val)
+
+    return candidates
 
 
 def are_peers(p1, p2):
@@ -170,7 +174,7 @@ def board_to_str(board):
     """Convert board to a string resembling a Sudoku board
 
     Args:
-        board (List[List[str]])
+        board (List[List[int]])
     
     Returns:
         str
@@ -185,9 +189,9 @@ def board_to_str(board):
                 s += " | "
 
             if j == BOARD_SIDE-1:
-                s += board[i][j] + "\n"
+                s += str(board[i][j]) + "\n"
             else:
-                s += board[i][j] + " "
+                s += str(board[i][j]) + " "
     return s
 
 
@@ -195,7 +199,7 @@ def init_board():
     """Initialize unsolved board
 
     Returns:
-        List[List[str]]
+        List[List[int]]
     """
     return [[UNSOLVED for x in range(BOARD_SIDE)] for y in range(BOARD_SIDE)]
 
@@ -232,7 +236,7 @@ def load_all_sudoku_boards(boards_fn):
         boards_fn (str): path to txt file containing above Grid data
     
     Returns:
-        List[List[List[str]]]: list of boards
+        List[List[List[int]]]: list of boards
     """
     boards = []
 
@@ -256,24 +260,27 @@ def str_to_board(s):
         301007040
         720040060
         004010003
-       to a board
+       to a board where each element on the board is a char
     
     Args:
         s (str)
     
     Returns:
-        List[List[str]]: board
+        List[List[int]]: board
     """
     board = init_board()
     lines = s.split("\n")
+    assert(len(lines)==BOARD_SIDE)
     for row, line in enumerate(s.strip().split("\n")):
-        board[row] = list(line)
+        els = list(map(int, line)) 
+        assert(len(els)==BOARD_SIDE)
+        board[row] = els
     return board
 
 
 if __name__=="__main__":
     p = argparse.ArgumentParser()
-    p.add_argument("--boards_file", default="sudoku.txt")
+    p.add_argument("boards_file", default="sudoku.txt")
     args = p.parse_args()
 
     try:
@@ -288,7 +295,6 @@ if __name__=="__main__":
         try:
             logging.info(f"Unsolved board: \n{board_to_str(board)}")
             start = timer()
-        
             solver = SudokuSolver(board)
             solver.solve()
             end = timer()

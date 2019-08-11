@@ -5,7 +5,7 @@
 Requires `python 3.6+`
 
 ```
-python3 sudoku/solver.py --boards_file sudoku.txt
+python3 sudoku/solver.py sudoku.txt
 more log.info
 ```
 Log output: `log.info`
@@ -17,7 +17,7 @@ docker run -it sudoku:1.0 bash
 ```
 And once in the container:
 ```
-python3 sudoku/solver.py --boards_file sudoku.txt
+python3 sudoku/solver.py sudoku.txt
 more log.info
 ```
 
