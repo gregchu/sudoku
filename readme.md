@@ -1,8 +1,9 @@
 # Usage
 
+Requires `python 3.6+`
+
 ```
-sh docker_build.sh
-python solver.py sudoku.txt
+python solver.py
 ```
 Expected output: `sudoku.log`
 
