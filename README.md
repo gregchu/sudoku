@@ -8,9 +8,10 @@ Requires `python 3.6+`
 python3 sudoku/solver.py sudoku.txt
 more log.info
 ```
-Log output: `log.info`
 
 ### **Optional Docker Usage**
+
+From the same directory as the Dockerfile
 ```
 docker build -t sudoku:1.0 .
 docker run -it sudoku:1.0 bash
@@ -35,7 +36,7 @@ Brute-force wasn't an option as a first approach since the complexity is `O(n^m)
 
 ## 1. Depth first search with backtracking
 
-Note: code not included
+Note: only code for approach 2 is included
 
 ### **Algorithm:**
 1. Find the first unsolved cell (in raster-scan order)  
@@ -96,7 +97,7 @@ Then, the algorithm is the same as in Approach 1 except for a couple details (bo
     a. If we cannot find an unsolved cell, the board is solved
 2. For each candidate __(from the precomputed `map`)__  
     a. If candidate is valid (__does not cause peers to have 0 candidates\*__), assign that cell with that value, and return (recurse) to step 1.  
-3. If no candidates in step 3) are valid, backtrack\** up the tree and try a new candidate for the previous node 
+3. If no candidates in step 2) are valid, backtrack\** up the tree and try a new candidate for the previous node 
 
 \* This is the backtracking trigger. As we assign a candidate to a cell, we can remove that candidate from the cell's [peers](http://sudopedia.enjoysudoku.com/Peer.html). If this removal causes the peer to not have any candidates left, we've made an error and must backtrack.
 
