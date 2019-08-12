@@ -73,10 +73,13 @@ class SudokuSolver:
         Returns:
             bool: if candidate is valid for the cell
         """
+        if candidate not in self.candidates[pos]:
+            return False
+
         # store deleted candidates in case we need to backtrack
         deleted_candidates[pos].extend(self.candidates[pos])
         del self.candidates[pos]
-        
+
         # remove candidate from peers' candidates
         for peer in self.peers[pos]:
             if peer not in self.candidates: # already solved cell
@@ -229,7 +232,7 @@ def load_sudoku_boards(boards_fn):
         004010003
     * 9x9 grids
     * Each row a consecutive set of characters
-    * Delimited by "Grid XX\n"
+    * Delimited by "Grid XX\n" where X are digits
     
     Args:
         boards_fn (str): path to txt file containing above Grid data
@@ -259,7 +262,7 @@ def str_to_board(s):
         301007040
         720040060
         004010003
-       to a board where each element on the board is a char
+       to a board where each element on the board is an int
     
     Args:
         s (str)
@@ -280,6 +283,7 @@ def str_to_board(s):
 if __name__=="__main__":
     p = argparse.ArgumentParser()
     p.add_argument("boards_file", default="sudoku.txt")
+    p.add_argument("--log_file", default=LOG_FILE)
     args = p.parse_args()
 
     try:

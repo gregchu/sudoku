@@ -24,7 +24,7 @@ more log.info
 ### **Tests**
 Requires `pytest`
 ```
-pytest -s -v tests/tester.py
+pytest -v tests/tester.py
 ```
 
 # Approaches
@@ -165,8 +165,3 @@ Grid 02
 * 9x9 grids
 * Each row a consecutive set of characters
 * Delimited by "Grid XX\n", where X is an integer [0-9]
-
-
-
-
-
